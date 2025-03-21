@@ -5,12 +5,12 @@ const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState('students'); // Default section
+  const [activeSection, setActiveSection] = useState('students');
   const chatWindowRef = useRef(null);
 
   const WORKER_URLS = {
     workshop: 'https://pi360-rag-sql-generator.theshinchangupta.workers.dev',
-    students: 'https://pi360-sql-generator.karan-cse.workers.dev', // Separate endpoint
+    students: 'https://pi360-sql-generator.karan-cse.workers.dev',
     training: 'https://pi360-rag-sql-generator.theshinchangupta.workers.dev',
     research: 'https://pi360-rag-sql-generator.theshinchangupta.workers.dev',
     seminar: 'https://pi360-rag-sql-generator.theshinchangupta.workers.dev',
@@ -52,19 +52,13 @@ const Chatbot = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { 
-              role: 'system', 
-              content: `${systemMessage}\n\nDATA: ${JSON.stringify(responseContent)}`
-            },
-            { 
-              role: 'user', 
-              content: `Create response for and please remove the extra data from the response like give a small and accurate data remove the things that are not required like extra make it professional: "${userQuery}"`
-            }
+            { role: 'system', content: `${systemMessage}\n\nDATA: ${JSON.stringify(responseContent)}` },
+            { role: 'user', content: `Create response for and please remove the extra data from the response like give a small and accurate data remove the things that are not required like extra make it professional: "${userQuery}"` }
           ],
         }),
       });
   
-      if (!response.ok) throw new Error('Analysis failed');
+      if (!response.ok) throw new Error(`Beautification failed: ${response.statusText}`);
       
       const data = await response.json();
       let beautified = data.response;
@@ -131,10 +125,11 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      // Special handling for 'students' endpoint if it differs
       const payload = activeSection === 'students'
         ? { content: input, section: activeSection }
         : { schemaName: activeSection, content: input };
+
+      console.log(`Sending request to ${WORKER_URLS[activeSection]} with payload:`, payload);
 
       const workerResponse = await fetch(WORKER_URLS[activeSection], {
         method: 'POST',
@@ -142,17 +137,25 @@ const Chatbot = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!workerResponse.ok) throw new Error('Failed to generate SQL query');
+      if (!workerResponse.ok) {
+        const errorText = await workerResponse.text();
+        throw new Error(`Failed to generate SQL query: ${workerResponse.status} - ${errorText}`);
+      }
       
       const workerData = await workerResponse.json();
       const sqlQuery = workerData.query;
+
+      console.log('Generated SQL:', sqlQuery);
 
       const encodedQuery = btoa(sqlQuery);
       const chatResponse = await fetch(
         `https://pi360.net/site/api/endpoints/chat.php?institute_id=mietjammu&secret=R0dqSDg3Njc2cC00NCNAaHg=&query=${encodedQuery}`
       );
 
-      if (!chatResponse.ok) throw new Error('Database error');
+      if (!chatResponse.ok) {
+        const errorText = await chatResponse.text();
+        throw new Error(`Database error: ${chatResponse.status} - ${errorText}`);
+      }
       
       const chatData = await chatResponse.json();
       
@@ -172,10 +175,10 @@ const Chatbot = () => {
         throw new Error(chatData.response_message || 'Database error');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Fetch Error:', error);
       setMessages(prev => prev.map(msg => 
         msg.id === tempId
-          ? {...msg, error: error.message}
+          ? {...msg, error: `Error: ${error.message}`}
           : msg
       ));
     } finally {
