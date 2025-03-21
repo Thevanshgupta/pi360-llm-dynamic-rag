@@ -3,7 +3,7 @@
 	const LLM_API_URL = "https://api.cloudflare.com/client/v4/accounts/6dd7e955280ac6088c13797686130f8a/ai/run/@hf/meta-llama/meta-llama-3-8b-instruct";
 	const EMBEDDING_API_URL = "https://api.cloudflare.com/client/v4/accounts/6dd7e955280ac6088c13797686130f8a/ai/run/@hf/sentence-transformers/all-MiniLM-L6-v2";
 	const API_KEY = "Bearer GuS2-n5DeEsQghTWuSjQ-LDPgXXxhVeKIwRCFA05";
-  
+  m
 	// Schema Configuration
 	const SCHEMA_CONFIG = {
 		patent: {
