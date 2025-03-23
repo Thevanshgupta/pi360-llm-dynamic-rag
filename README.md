@@ -1,4 +1,4 @@
-PI360 Chatbot
+# **PI360 Chatbot**
 
 This project includes a Cloudflare Worker for generating SQL queries using AI and embeddings, and a React-based chatbot frontend for user interaction. It processes natural language queries, matches them to schemas with embeddings, generates SQL, fetches data, and displays results in a styled UI.
 
